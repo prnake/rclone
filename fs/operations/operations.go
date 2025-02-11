@@ -1877,13 +1877,13 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename
 
 // CopyURL copies the data from the url to (fdst, dstFileName)
 func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, autoFilename, dstFileNameFromHeader bool, noClobber bool) (dst fs.Object, err error) {
-	err = copyURLFn(ctx, dstFileName, url, autoFilename, dstFileNameFromHeader, func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error) {
-		if noClobber {
-			_, err = fdst.NewObject(ctx, dstFileName)
-			if err == nil {
-				return errors.New("CopyURL failed: file already exist")
-			}
+	if noClobber {
+		_, err = fdst.NewObject(ctx, dstFileName)
+		if err == nil {
+			return nil, errors.New("CopyURL failed: file already exist")
 		}
+	}
+	err = copyURLFn(ctx, dstFileName, url, autoFilename, dstFileNameFromHeader, func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error) {
 		dst, err = RcatSize(ctx, fdst, dstFileName, in, size, modTime, nil)
 		return err
 	})
