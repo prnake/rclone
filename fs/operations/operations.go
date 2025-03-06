@@ -1843,7 +1843,14 @@ type copyURLFunc func(ctx context.Context, dstFileName string, in io.ReadCloser,
 // copyURLFn copies the data from the url to the function supplied
 func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename, dstFileNameFromHeader bool, fn copyURLFunc) (err error) {
 	client := fshttp.NewClient(ctx)
-	resp, err := client.Get(url)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return fmt.Errorf("Open failed: %w", err)
+	}
+	for _, option := range fs.GetConfig(ctx).DownloadHeaders {
+		req.Header.Add(option.Key, option.Value)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
